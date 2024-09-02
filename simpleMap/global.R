@@ -6,9 +6,7 @@ setwd("~/Dropbox/github_repos/avp-map/avp_map_viz/simpleMap")
 
 ld <- read.csv("~/Dropbox/github_repos/avp-map/avp_map_viz/data/voter_ld_public.csv") %>%
   shape_data(level = "ld") %>%
-  st_as_sf(wkt = "shape_geom") %>%
-  st_simplify(dTolerance = 0.02)
-
+  st_as_sf(wkt = "shape_geom")
 
 state_boundary <- function(shapefile, markers) {
   removeNotification(id = "region_error", session = getDefaultReactiveDomain())

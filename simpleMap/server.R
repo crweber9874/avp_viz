@@ -1,3 +1,6 @@
+setwd("~/Dropbox/github_repos/avp-map/avp_map_viz/simpleMap")
+source("global.R")
+
 server <- function(input, output) {
  # Set UA lat lon
    LAT = 32.228779
@@ -144,43 +147,42 @@ server <- function(input, output) {
    print(intersecting_geom_reactive())
  })
 
-  output$hist <- renderPlot({
+ output$hist <- renderPlot({
 
-    # Calculate the mean for the selected LD and variable
-    mean <- ld %>%
-      filter(LD == intersecting_geom_reactive()) %>%
-      pull(input$variable)
+   # Calculate the mean for the selected LD and variable
+   mean <- ld %>%
+     filter(LD == intersecting_geom_reactive()) %>%
+     pull(input$variable)
 
-    # Print the mean value (for debugging)
-    print(mean)
+   # Print the mean value (for debugging)
+   print(mean)
 
-    # Only proceed if a variable is selected
-    if (!is.null(input$variable)) {
+ filtered_data <- ld %>% select(input$variable)
+print(dim(filtered_data))
 
-      # Create the plot
-      data %>%
-        filter(is.finite(.data[[input$variable]])) %>%  # Remove non-finite values
+       ggplot(filtered_data, aes(x = .data[[input$variable]])) +
+         geom_histogram(fill = "lightblue", color = "white", binwidth = 0.02) +
 
-        # Basic histogram setup
-        ggplot(aes(x = .data[[input$variable]])) +
-        geom_histogram(fill = "lightblue", color = "white", binwidth = 0.1) +
+         # Add a vertical line at the mean with a label
+         geom_vline(aes(xintercept = mean), color = "darkgrey", linetype = "dashed", size = 1) +
 
-        # Add a vertical line at the mean with a label
-        geom_vline(aes(xintercept = mean), color = "darkgrey", linetype = "dashed", size = 1) +
-        # Add distribution median
-        geom_vline(aes(xintercept = median(.data[[input$variable]])), color = "black", linetype = "solid", size = 1) +
-        annotate("text", x = mean, y = Inf, label = paste0( "LD:", intersecting_geom_reactive(), " \nScore (Dashed)"),
-                 vjust = 1.5, hjust = 0, color = "black", size = 4) +
-        annotate("text", x = mean -0.02, y = 2000, label = paste0("Arizona \nMedian \n(Black)"),
-                 vjust = 1.5, hjust = 1, color = "black", size = 4) +
-        ggtheme +
-        labs(
-          title = "",
-          x = "Voting Score",  # Label the x-axis
-          y = "Frequency"      # Label the y-axis
-        )
-    }
-  })
+         # Add distribution median
+         geom_vline(aes(xintercept = median(.data[[input$variable]])), color = "black", linetype = "solid", size = 1) +
+
+         annotate("text", x = mean, y = Inf, label = paste0( "LD:", intersecting_geom_reactive(), " \nScore (Dashed)"),
+                  vjust = 1.5, hjust = 0, color = "black", size = 4) +
+
+         annotate("text", x = median(filtered_data[[input$variable]]), y = 3,
+                  label = paste0("Arizona \nMedian \n(Black)"), vjust = 1.5, hjust = 1, color = "black", size = 4) +
+
+         ggtheme +  # Make sure 'ggtheme' is defined or replaced with an appropriate theme
+         labs(
+           title = "",
+           x = "Voting Score",
+           y = "Frequency of Legislative Districts"
+         )
+
+ })
 
  output$race <- renderUI({
   geom_data <- ld %>% filter(LD == intersecting_geom_reactive())
