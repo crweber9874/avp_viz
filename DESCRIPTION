@@ -1,11 +1,15 @@
 Package: avpMap
 Type: Package
-Title: What the Package Does (Title Case)
+Title: avpMap: Build visualizations for the Arizona Voter Project
 Version: 0.1.0
-Author: Who wrote it
-Maintainer: The package maintainer <yourself@somewhere.net>
-Description: More about what it does (maybe more than one line)
-    Use four spaces when indenting paragraphs within the Description.
-License: What license is it under?
+Author: Christopher Weber
+Maintainer: Christopher Weber
+Description: The Arizona Voter Project (AVP) is a project to build a comprehensive database of voter registration and election data for the state of Arizona. The project is supported by the University of Arizona. This package provides functions to build visualizations of the data collected by the AVP.
+License: MIT + file LICENSE
 Encoding: UTF-8
 LazyData: true
+Imports: 
+  dplyr,
+  ggplot2,
+  leaflet,
+  sf
