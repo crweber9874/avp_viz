@@ -1,7 +1,6 @@
 library(dplyr)
 library(sf)
 library(ggplot2)
-
 setwd("~/Dropbox/github_repos/avp-map/avp_map_viz/simpleMap")
 
 load("ld_public.rda")

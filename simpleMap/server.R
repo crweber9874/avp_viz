@@ -1,5 +1,4 @@
 rm(list = ls())
-setwd("~/Dropbox/github_repos/avp-map/avp_map_viz/simpleMap")
 source("global.R")
 
 server <- function(input, output) {
