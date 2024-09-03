@@ -1,3 +1,4 @@
+rm(list = ls())
 setwd("~/Dropbox/github_repos/avp-map/avp_map_viz/simpleMap")
 source("global.R")
 
@@ -23,7 +24,9 @@ server <- function(input, output) {
         weight = 1,
         label = lapply(seq_len(nrow(ld)), function(i) {
           paste0(
-            "<b>Score:</b> ", round(ld[[selected_var]][i], 2),
+            "<b>Legislative District:</b> ", ld$LD[i], # Add the LD label here
+            "<br>",
+            "<b>Vote Score:</b> ", round(ld[[selected_var]][i], 2),
             "<br>",
             "<b>Percent Republican:</b> ", round(ld$republican_registration[i] *100, 2), "<span style='font-weight: normal;'> %</span>",  # Replace with your actual column names
             "<br>",
@@ -51,7 +54,18 @@ server <- function(input, output) {
                 opacity = 0.7,
                 title = input$variable %>% names()) %>%
       addControl(html = paste0("<h3>", names(input$variable), "</h3>"), position = "topleft") %>%
-      fitBounds(lng1 = -114.8, lat1 = 31.3, lng2 = -109, lat2 = 37)  # Add this line here
+      addLabelOnlyMarkers(
+        data = ld,
+        lng = ~st_coordinates(st_centroid(shape_geom))[,1], # Extract longitude from centroid
+        lat = ~st_coordinates(st_centroid(shape_geom))[,2], # Extract latitude from centroid
+        label = ~as.character(LD), # Assuming 'LD' column contains the labels
+        labelOptions = labelOptions(
+          noHide = FALSE,
+          direction = 'center',
+          style = list("background-color" = "transparent") # Make the box transparent
+        )
+      )
+
 
 
 
@@ -175,11 +189,11 @@ print(dim(filtered_data))
          annotate("text", x = median(filtered_data[[input$variable]]), y = 3,
                   label = paste0("Arizona \nMedian \n(Black)"), vjust = 1.5, hjust = 1, color = "black", size = 4) +
 
-         ggtheme +  # Make sure 'ggtheme' is defined or replaced with an appropriate theme
+         ggtheme +
          labs(
            title = "",
            x = "Voting Score",
-           y = "Frequency of Legislative Districts"
+           y = "Number of Legislative Districts"
          )
 
  })
@@ -191,7 +205,7 @@ print(dim(filtered_data))
 
     # Extract and format the desired columns with row markers
     formatted_text <- paste(
-      "<h3>Race/Ethnicity</h3>",
+      "<h3>Race/Ethnicity <sup>2</sup></h3>",
       "<div style='display: flex; justify-content: space-between;'>",
         "<div>",
     #  "<b style='font-size: 1.2em; padding-bottom: 10px;'>Legislative District:</b><br>", # Increase font size and add bottom padding
@@ -242,7 +256,7 @@ print(dim(filtered_data))
 
      # Extract and format the desired columns with row markers
      formatted_text <- paste(
-       "<h3>Demographics</h3>",
+       "<h3>Demographics <sup>3</sup></h3>",
        "<div style='display: flex; justify-content: space-between;'>",
        "<div>",
        #  "<b style='font-size: 1.2em; padding-bottom: 10px;'>Legislative District:</b><br>", # Increase font size and add bottom padding
