@@ -5,7 +5,7 @@ account: azvoterproject
 server: shinyapps.io
 hostUrl: https://api.shinyapps.io/v1
 appId: 12585487
-bundleId: 9054343
+bundleId: 9054382
 url: https://azvoterproject.shinyapps.io/simpleMap/
 version: 1
 asMultiple: FALSE
