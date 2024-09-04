@@ -99,7 +99,6 @@ server <- function(input, output) {
                 values = ~ques,
                 opacity = 0.7,
                 title = input$variable %>% names()) %>%
-      addControl(html = paste0("<h3>", names(input$variable), "</h3>"), position = "topleft") %>%
       addLabelOnlyMarkers(
         data = ld,
         lng = ~st_coordinates(st_centroid(shape_geom))[,1], # Extract longitude from centroid
@@ -110,7 +109,10 @@ server <- function(input, output) {
           direction = 'center',
           style = list("background-color" = "transparent") # Make the box transparent
         )
-      )
+      ) %>%
+      leaflet.extras::addSearchOSM(options = searchOptions(collapsed = TRUE))
+
+
 
 
 
