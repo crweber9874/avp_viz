@@ -6,6 +6,10 @@ library(plotly)
 library(jsonlite)
 library(tidyr)
 
+# Clean code
+## Add function calls.
+## Modulariz
+
 azblue =  "#0C234B"
 azred  =  "#AB0520"
 oasis  =  "#378DBD"
@@ -244,7 +248,7 @@ server <- function(input, output) {
              hoverinfo = 'text',
              text = ~paste0(round(Registration, 2)*100, '% of registered voters'),
              marker = list(
-               colors = new_colors,
+               colors = c("#AB0520", "#0C234B" ,"#378DBD"),
                line = list(color = '#FFFFFF', width = 1)
              ),
              hoverlabel = list(bgcolor = 'rgba(255, 255, 255, 0.01)', # Fully transparent background
