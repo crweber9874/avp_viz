@@ -12,4 +12,10 @@ Imports:
   dplyr,
   ggplot2,
   leaflet,
-  sf
+  sf,
+  tidyr,
+  jsonlite,
+  plotly,
+  shiny,
+  leaflet.extras,
+  leaflet

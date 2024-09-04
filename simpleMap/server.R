@@ -1,3 +1,4 @@
+## Build the Server for a Shiny App of Legislative Districts
 library(dplyr)
 library(sf)
 library(ggplot2)
@@ -5,22 +6,14 @@ library(leaflet.extras)
 library(plotly)
 library(jsonlite)
 library(tidyr)
+library(avpMap)
 
 # Clean code
 ## Add function calls.
-## Modulariz
 
-azblue =  "#0C234B"
-azred  =  "#AB0520"
-oasis  =  "#378DBD"
-grey = "#E2E9EB"
-warmgrey = "#F4EDE5"
-midnight = "#001C48"
-azurite = "#1E5288"
-chili = "#8B0015"
-white = "#FFFFFF"
-
-
+azblue =  az_color("azblue")
+azred  =   az_color("azred")
+oasis  =  az_color("oasis")
 
 includeCSS("www/style.css")
 
@@ -70,11 +63,9 @@ for (shape_property in shape_properties_extracted) {
 # Combine the parsed data into a data frame
 vote_data <- bind_rows(parsed_data)
 
-
-
 server <- function(input, output) {
  # Set UA lat lon
-   LAT = 32.228779
+   LAT =  32.228779
    LON = - 110.976743
   variable_name = reactiveVal("Predicted Vote in 2024")
   # Load the data
@@ -94,7 +85,7 @@ server <- function(input, output) {
         weight = 1,
         label = lapply(seq_len(nrow(ld)), function(i) {
           paste0(
-            "<b>Legislative District:</b> ", ld$LD[i], # Add the LD label here
+            "<b>Legislative District:</b> ", ld$LD[i],
             "<br>",
             "<b>Vote Score:</b> ", round(ld[[selected_var]][i], 2),
             "<br>") %>%
@@ -104,8 +95,8 @@ server <- function(input, output) {
           style = list(
             "font-family" = "sans-serif",
             "font-size" = "13px",
-            "color" = "rgba(128, 128, 128, 0.95)",  # Grey with 25% opacity
-            "background-color" = "rgba(255, 255, 255, 0.5)"  # White with 75% opacity
+            "color" = "rgba(128, 128, 128, 0.95)",
+            "background-color" = "rgba(255, 255, 255, 0.5)"
 
           )
         )
@@ -121,26 +112,16 @@ server <- function(input, output) {
                 title = input$variable %>% names()) %>%
       addLabelOnlyMarkers(
         data = ld,
-        lng = ~st_coordinates(st_centroid(shape_geom))[,1], # Extract longitude from centroid
-        lat = ~st_coordinates(st_centroid(shape_geom))[,2], # Extract latitude from centroid
-        label = ~as.character(LD), # Assuming 'LD' column contains the labels
+        lng = ~st_coordinates(st_centroid(shape_geom))[,1], # longitude from centroid
+        lat = ~st_coordinates(st_centroid(shape_geom))[,2], # latitude from centroid
+        label = ~as.character(LD),
         labelOptions = labelOptions(
           noHide = FALSE,
           direction = 'center',
-          style = list("background-color" = "transparent") # Make the box transparent
+          style = list("background-color" = "transparent") # Style box
         )
       ) %>%
       leaflet.extras::addSearchOSM(options = searchOptions(collapsed = TRUE))
-
-
-
-
-
-
-#      addPopups(-112.074037, 33.448377, "content",
-#                options = popupOptions(closeButton = FALSE)
-#      ) %>%
-#      addMarkers(~-112, ~34, popup = ~htmlEscape("blip"))
   })
 
 
