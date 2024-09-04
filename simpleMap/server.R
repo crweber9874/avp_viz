@@ -1,9 +1,25 @@
 library(dplyr)
 library(sf)
 library(ggplot2)
-azblue = "#0C234B"
-azred  = "#AB0520"
-oasis = "#378DBD"
+library(leaflet.extras)
+library(plotly)
+library(jsonlite)
+library(tidyr)
+
+azblue =  "#0C234B"
+azred  =  "#AB0520"
+oasis  =  "#378DBD"
+grey = "#E2E9EB"
+warmgrey = "#F4EDE5"
+midnight = "#001C48"
+azurite = "#1E5288"
+chili = "#8B0015"
+white = "#FFFFFF"
+
+
+
+includeCSS("www/style.css")
+
 load("ld_public.rda")
 
 

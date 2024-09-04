@@ -5,6 +5,7 @@ library(DT)
 library(plotly)
 
 
+
 ui <- dashboardPage(
   skin = "blue",
   dashboardHeader(title = paste("Voting in Arizona")),
@@ -105,7 +106,7 @@ ui <- dashboardPage(
               ),
 
               fluidRow(
-                includeCSS("style.css"),
+                includeCSS("www/style.css"),
                 column(
                   width = 12,
                   div(
