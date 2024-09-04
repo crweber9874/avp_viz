@@ -1,8 +1,11 @@
 library(dplyr)
 library(sf)
 library(ggplot2)
-
+azblue = "#0C234B"
+azred  = "#AB0520"
+oasis = "#378DBD"
 load("ld_public.rda")
+
 
 state_boundary <- function(shapefile, markers) {
   removeNotification(id = "region_error", session = getDefaultReactiveDomain())
@@ -20,11 +23,11 @@ state_boundary <- function(shapefile, markers) {
 }
 
 ggtheme <- theme(
-  plot.title = element_text(hjust = 0, vjust = 0, colour = "#3C3C3C", size = 13),
-  axis.text.x = element_text(size = 13, colour = "#535353", ),
-  axis.text.y = element_text(size = 13, colour = "#535353", ),
-  axis.title = element_text(size = 13, colour = "#535353", ),
-  axis.title.y = element_text(size = 13, colour = "#535353",  vjust = 1.5),
+  plot.title = element_text(hjust = 0, vjust = 0, colour = azblue, size = 13),
+  axis.text.x = element_text(size = 13, colour = azblue),
+  axis.text.y = element_text(size = 13, colour = azblue),
+  axis.title = element_text(size = 13, colour = azblue ),
+  axis.title.y = element_text(size = 13, colour = azblue,  vjust = 1.5),
   axis.ticks = element_blank(),
   strip.text.x = element_text(size = 13),
   panel.grid.major = element_line(colour = "#D0D0D0", size = .25),
@@ -32,6 +35,21 @@ ggtheme <- theme(
   legend.text = element_text(size = 13),
   legend.title = element_text(size = 13)
 )
+
+
+# Construct vote data from shape properties
+shape_properties_extracted <- ld$shape_properties
+parsed_data <- list()
+
+# Loop through each shape property
+for (shape_property in shape_properties_extracted) {
+  parsed_list <- fromJSON(shape_property)
+  parsed_data <- append(parsed_data, list(parsed_list))
+}
+
+# Combine the parsed data into a data frame
+vote_data <- bind_rows(parsed_data)
+
 
 
 server <- function(input, output) {
@@ -59,12 +77,6 @@ server <- function(input, output) {
             "<b>Legislative District:</b> ", ld$LD[i], # Add the LD label here
             "<br>",
             "<b>Vote Score:</b> ", round(ld[[selected_var]][i], 2),
-            "<br>",
-            "<b>Percent Republican:</b> ", round(ld$republican_registration[i] *100, 2), "<span style='font-weight: normal;'> %</span>",  # Replace with your actual column names
-            "<br>",
-            "<b>Percent Democrat:</b> ",   round(ld$democratic_registration[i] *100, 2), "<span style='font-weight: normal;'> %</span>",  # Replace with your actual column names
-            "<br>",
-            "<b>Percent Independent:</b> ", round(ld$independent_registration[i] *100, 2), "<span style='font-weight: normal;'> %</span>",  # Replace with your actual column names
             "<br>") %>%
             htmltools::HTML()
         }),
@@ -72,7 +84,9 @@ server <- function(input, output) {
           style = list(
             "font-family" = "sans-serif",
             "font-size" = "13px",
-            "color" = "grey"
+            "color" = "rgba(128, 128, 128, 0.95)",  # Grey with 25% opacity
+            "background-color" = "rgba(255, 255, 255, 0.5)"  # White with 75% opacity
+
           )
         )
       ) %>%
@@ -166,7 +180,7 @@ server <- function(input, output) {
       addMarkers(data = data.frame(lat = input$map_shape_click$lat, lng = input$map_shape_click$lng),
                  options = markerOptions(draggable = TRUE )) %>%
 
-    setView(lng = input$map_shape_click$lng, lat = input$map_shape_click$lat, zoom = 8) # Adjust zoom level as needed
+    setView(lng = input$map_shape_click$lng, lat = input$map_shape_click$lat, zoom = 9) # Adjust zoom level as needed
 
     current_markers$lat <- input$map_shape_click$lat
     current_markers$lng <- input$map_shape_click$lng
@@ -193,6 +207,52 @@ server <- function(input, output) {
    print(intersecting_geom_reactive())
  })
 
+ output$pie <- renderPlotly({
+   ld %>%
+     filter(LD == intersecting_geom_reactive()) %>%
+     subset(select = c(republican_registration, democratic_registration, independent_registration)) %>%
+     rename(Republican = republican_registration,
+            Democrat = democratic_registration,
+            Independent = independent_registration) %>%
+     pivot_longer(cols = c(Republican, Democrat, Independent),
+                  names_to = "Party", values_to = "Registration") %>%
+     # drop geom
+     as.data.frame() %>%
+     plot_ly(labels = ~Party, values = ~Registration,
+             type = 'pie',
+             textposition = 'inside',
+             textinfo = 'label+percent',
+             insidetextfont = list(color = '#F4F4F4'),
+             hoverinfo = 'text',
+             text = ~paste0(round(Registration, 2)*100, '% of registered voters'),
+             marker = list(
+               colors = new_colors,
+               line = list(color = '#FFFFFF', width = 1)
+             ),
+             hoverlabel = list(bgcolor = 'rgba(255, 255, 255, 0.01)', # Fully transparent background
+                               color = "white"
+                               ),          # Keep text color black for visibility
+
+             showlegend = FALSE) %>%
+     config(displayModeBar = FALSE) %>%
+     layout(title = list(
+       text = paste0('Legislative District ', intersecting_geom_reactive()),
+       font = list(size = 16,
+                   color = 'black',
+                   family = "Arial, sans-serif",
+                   weight = "bold")
+     ),
+
+     xaxis = list(showgrid = FALSE, zeroline = FALSE, showticklabels = FALSE),
+     yaxis = list(showgrid = FALSE, zeroline = FALSE, showticklabels = FALSE),
+     plot_bgcolor = 'white',
+     paper_bgcolor = 'white'
+     )
+ })
+
+
+
+
  output$hist <- renderPlot({
 
    # Calculate the mean for the selected LD and variable
@@ -207,7 +267,7 @@ server <- function(input, output) {
 print(dim(filtered_data))
 
        ggplot(filtered_data, aes(x = .data[[input$variable]])) +
-         geom_histogram(fill = "lightblue", color = "white", binwidth = 0.02) +
+         geom_histogram(fill = oasis, color = "white", binwidth = 0.02) +
 
          # Add a vertical line at the mean with a label
          geom_vline(aes(xintercept = mean), color = "darkgrey", linetype = "dashed", size = 1) +
@@ -237,17 +297,17 @@ print(dim(filtered_data))
 
     # Extract and format the desired columns with row markers
     formatted_text <- paste(
-      "<h3>Race/Ethnicity <sup>2</sup></h3>",
+      "<h3>Race/Ethnicity </h3>",
       "<div style='display: flex; justify-content: space-between;'>",
         "<div>",
     #  "<b style='font-size: 1.2em; padding-bottom: 10px;'>Legislative District:</b><br>", # Increase font size and add bottom padding
-          "<b style='background-color: #f2f2f2; padding: 1px;'>Total Population:</b><br>",
+          "<b>Total Population:</b><br>",
           "<b>White:</b><br>",
-          "<b style='background-color: #f2f2f2; padding: 1px;'>Black:</b><br>",
+          "<b>Black:</b><br>",
           "<b>American Indian:</b><br>",
-          "<b style='background-color: #f2f2f2; padding: 1px;'>Asian:</b><br>",
+          "<b>Asian:</b><br>",
           "<b>Other Race:</b><br>",
-          "<b style='background-color: #f2f2f2; padding: 1px;'>Two or More Races:</b><br>",
+          "<b>Two or More Races:</b><br>",
           "<b>Latino:</b>",
         "</div>",
         "<div style='text-align: right;'>",
@@ -281,6 +341,49 @@ print(dim(filtered_data))
 
 
 
+ output$registration <- renderUI({
+   geom_data <- ld %>% filter(LD == intersecting_geom_reactive())
+
+   if (!is.null(geom_data)) {
+
+     # Extract and format the desired columns with row markers
+     formatted_text <- paste(
+       "<h3>Party Registration </h3>",
+       "<div style='display: flex; justify-content: space-between;'>",
+       "<div>",
+       #  "<b style='font-size: 1.2em; padding-bottom: 10px;'>Legislative District:</b><br>", # Increase font size and add bottom padding
+       "<b>Republican Registration:</b><br>",
+       "<b>Independent:</b><br>",
+       "<b>Democratic Registration:</b><br>",
+       "<b>Total Registered Voters:</b><br>",
+       "</div>",
+       "<div style='text-align: right;'>",
+       #          geom_data$LD, "<br>",
+       format(geom_data$republican, big.mark = ","), "<br>",
+       format(geom_data$independent,big.mark = ","), " <br>",
+       format(geom_data$democrat, big.mark = ",") ,"<br>",
+       format(geom_data$democrat + geom_data$democrat + geom_data$independent,  big.mark = ","), "<br>",
+              "</div>",
+       "</div>",
+       "</div>"
+     )
+
+     # Wrap the formatted text in a div with card-like styling and 3D effect
+     div(class = "card", style = "padding: 20px; margin-top: 10px;
+                                box-shadow: 5px 5px 10px rgba(0, 0, 0, 0.2);",
+         HTML(formatted_text)
+     )
+
+   } else {
+     div(class = "card", style = "padding: 20px; margin-top: 10px;
+                                box-shadow: 5px 5px 10px rgba(0, 0, 0, 0.2);",
+         p("No geometry selected yet.")
+     )
+   }
+ })
+
+
+
  output$economics <- renderUI({
    geom_data <- ld %>% filter(LD == intersecting_geom_reactive())
 
@@ -288,12 +391,12 @@ print(dim(filtered_data))
 
      # Extract and format the desired columns with row markers
      formatted_text <- paste(
-       "<h3>Demographics <sup>3</sup></h3>",
+       "<h3>Demographics</h3>",
        "<div style='display: flex; justify-content: space-between;'>",
        "<div>",
        #  "<b style='font-size: 1.2em; padding-bottom: 10px;'>Legislative District:</b><br>", # Increase font size and add bottom padding
        "<b>Poverty Rate:</b><br>",
-       "<b style='background-color: #f2f2f2; padding: 1px;'>Median Household Income:</b><br>",
+       "<b>Median Household Income:</b><br>",
        "<b>Median Age:</b><br>",
        "</div>",
        "<div style='text-align: right;'>",
@@ -321,6 +424,7 @@ print(dim(filtered_data))
 
 
 
+
   # Add an observer to handle the zoom control
   observeEvent(input$zoomControl, {
     leafletProxy("map") %>%
@@ -335,6 +439,10 @@ print(dim(filtered_data))
     } else if(input$variable == "primaryVoterScore") {
       h2("Primary Voting Score")
     }
+  })
+
+  output$ld <- renderUI({
+      h3("Displayed: Legislative District", intersecting_geom_reactive())
   })
 
 }
