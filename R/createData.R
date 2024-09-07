@@ -75,3 +75,26 @@ shape_data = function(data = ld, level = c("ld", "county", "cd", "tract")){
 
 
 
+  cd <- read.csv("~/Dropbox/github_repos/avp-map/avp_map_viz/data/voter_cd_public.csv") %>%
+    shape_data(level = "cd") %>%
+    st_as_sf(wkt = "shape_geom") %>%
+    st_simplify(dTolerance = 0.02)
+
+
+
+  shape_properties_extracted <- cd$shape_properties
+  parsed_data <- list()
+
+  # Loop through each shape property
+  for (shape_property in shape_properties_extracted) {
+    parsed_list <- fromJSON(shape_property)
+    parsed_data <- append(parsed_data, list(parsed_list))
+  }
+
+  # Combine the parsed data into a data frame
+  df <- bind_rows(parsed_data)
+  # Join df and ld
+  voting <- left_join(cd, df, by = c("CD" = "DISTRICT"))
+  save(voting, file = "~/Dropbox/github_repos/avp-map/avp_map_viz/votingPatterns/cd_public.rda")
+
+
