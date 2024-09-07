@@ -6,6 +6,32 @@ library(plotly)
 library(jsonlite)
 library(tidyr)
 
+t = voting %>% as.data.frame() %>%
+  mutate(
+    votePresD_2016 = as.numeric(Pres2016_D),
+    votePresD_2020 = as.numeric(Pres2020_D),
+    votePresR_2016 = 100 - as.numeric(Pres2016_D),
+    votePresR_2020 = 100 - as.numeric(Pres2020_D),
+    partisan_balance = rowMeans(cbind(votePresD_2020 - votePresR_2020, votePresD_2016 - votePresR_2016)),
+    partisan_tilt = cut(partisan_balance, breaks = c(-Inf, -15, -3, 3, 15, Inf),
+                               labels = c("Strong Republican", "Competitive, Lean Republican", "Toss Up", "Competitive, Lean Democrat", "Strong Democrat")),
+    percentRepublican = as.numeric(republican_registration)*100,
+    percentDemocrat = as.numeric(democratic_registration)*100,
+    percentIndependent = as.numeric(independent_registration)*100,
+    totalVoters       = total_voters,
+    earlyVoter    = early_voter/general2022,
+    pollingVoter  = polling_voters/general2022,
+    provisionalVoters = provisional_voters/general2022) %>%
+  select(c(CD, votePresD_2020, votePresD_2016, votePresR_2020, votePresR_2016, partisan_tilt, partisan_balance, percentRepublican,
+           percentDemocrat, percentIndependent, totalVoters,
+           earlyVoter, pollingVoter, provisionalVoters))
+
+
+
+
+  select(c(early_voter_2022, polling_voter_2022, provisional_voters, partisan_tilt,
+           votePresD_2020, votePresD_2016, votePresR_2020, votePresR_2016))
+
 
 az_color <- function(color = c("azblue", "azred", "oasis", "grey", "warmgrey", "midnight", "azurite", "chili", "white")) {
   if(color == "azblue") {return("#0C234B")}
@@ -218,23 +244,53 @@ server <- function(input, output) {
     }
   })
 
+ output$shapeInfo <- renderText({
+   print(intersecting_geom_reactive())
+ })
 
  output$pie <- renderPlotly({
-   cd %>%
+   ld %>%
+     filter(LD == intersecting_geom_reactive()) %>%
      subset(select = c(republican_registration, democratic_registration, independent_registration)) %>%
      rename(Republican = republican_registration,
             Democrat = democratic_registration,
             Independent = independent_registration) %>%
      pivot_longer(cols = c(Republican, Democrat, Independent),
-                  names_to = "labels", values_to = "values") %>%
+                  names_to = "Party", values_to = "Registration") %>%
+     # drop geom
+     as.data.frame() %>%
+     plot_ly(labels = ~Party, values = ~Registration,
+             type = 'pie',
+             textposition = 'inside',
+             textinfo = 'label+percent',
+             insidetextfont = list(color = '#F4F4F4'),
+             hoverinfo = 'text',
+             text = ~paste0(round(Registration, 2)*100, '% of registered voters'),
+             marker = list(
+               colors = c("#AB0520", "#0C234B" ,"#378DBD"),
+               line = list(color = '#FFFFFF', width = 1)
+             ),
+             hoverlabel = list(bgcolor = 'rgba(255, 255, 255, 0.01)', # Fully transparent background
+                               color = "white"
+                               ),          # Keep text color black for visibility
 
-     pie_chart()
+             showlegend = FALSE) %>%
+     config(displayModeBar = FALSE) %>%
+     layout(title = list(
+       text = paste0('Legislative District ', intersecting_geom_reactive()),
+       font = list(size = 16,
+                   color = 'black',
+                   family = "Arial, sans-serif",
+                   weight = "bold")
+     ),
+
+     xaxis = list(showgrid = FALSE, zeroline = FALSE, showticklabels = FALSE),
+     yaxis = list(showgrid = FALSE, zeroline = FALSE, showticklabels = FALSE),
+     plot_bgcolor = 'white',
+     paper_bgcolor = 'white'
+     )
  })
 
-
-   output$shapeInfo <- renderText({
-     print(intersecting_geom_reactive())
-   })
 
 
 

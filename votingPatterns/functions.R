@@ -1,12 +1,3 @@
-#' Create a Pie Chart
-#'
-#' @param data A data frame containing the data to plot.
-#' @return A plotly pie chart.
-#' @export
-#' @examples
-#' ld <- read.csv("/Users/Chris/Dropbox/github_repos/avp-vote-models/avp-vote-models/tmp/preML.csv")
-#' test <- data_pie(ld, c("republican_registration", "democratic_registration", "independent_registration"))
-#' pie_chart(test)
 pie_chart <- function(data) {
   plotly::plot_ly(data,
                   labels = ~labels,  # Use column names directly
@@ -16,7 +7,7 @@ pie_chart <- function(data) {
                   textinfo = 'label+percent',
                   insidetextfont = list(color = '#F4F4F4'),
                   hoverinfo = 'text',
-                  text = ~paste0(round(values, 2) * 100, '% of voters'),
+                  text = ~paste0(round(values, 2) , '% of voters'),
                   marker = list(
                     colors = c("#AB0520", "#0C234B", "#378DBD"),
                     line = list(color = '#FFFFFF', width = 1)
@@ -27,7 +18,7 @@ pie_chart <- function(data) {
                   showlegend = FALSE) %>%
     plotly::config(displayModeBar = FALSE) %>%
     plotly::layout(title = list(
-      text = "",
+      text = "Party Registration",
       font = list(size = 16,
                   color = 'black',
                   family = "Arial, sans-serif",
@@ -41,3 +32,17 @@ pie_chart <- function(data) {
 }
 
 
+az_color <- function(color = c("azblue", "azred", "oasis", "grey", "warmgrey", "midnight", "azurite", "chili", "white")) {
+  if(color == "azblue") {return("#0C234B")}
+
+  if(color == "azred")  {return("#AB0520")}
+
+  if(color == "oasis")  {return("#378DBD")}
+  if(color == "azgrey")   {return("#E2E9EB")}
+  if(color == "warmgrey") {return("#F4EDE5")}
+  if(color == "midnight") {return("#001C48")}
+  if(color == "azurite") {return("#1E5288")}
+  if(color == "chili") {return("#8B0015")}
+  if(color == "azwhite") {return("#FFFFFF")}
+
+}
