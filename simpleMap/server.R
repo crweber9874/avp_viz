@@ -5,32 +5,11 @@ library(leaflet.extras)
 library(plotly)
 library(jsonlite)
 library(tidyr)
-
-
-az_color <- function(color = c("azblue", "azred", "oasis", "grey", "warmgrey", "midnight", "azurite", "chili", "white")) {
-  if(color == "azblue") {return("#0C234B")}
-
-  if(color == "azred")  {return("#AB0520")}
-
-  if(color == "oasis")  {return("#378DBD")}
-  if(color == "azgrey")   {return("#E2E9EB")}
-  if(color == "warmgrey") {return("#F4EDE5")}
-  if(color == "midnight") {return("#001C48")}
-  if(color == "azurite") {return("#1E5288")}
-  if(color == "chili") {return("#8B0015")}
-  if(color == "azwhite") {return("#FFFFFF")}
-
-}
-
-
-azblue =  az_color("azblue")
-azred  =   az_color("azred")
-oasis  =  az_color("oasis")
+library(RColorBrewer)
 
 includeCSS("www/style.css")
-
 load("ld_public.rda")
-
+source("functions.R")
 
 state_boundary <- function(shapefile, markers) {
   removeNotification(id = "region_error", session = getDefaultReactiveDomain())
@@ -46,6 +25,17 @@ state_boundary <- function(shapefile, markers) {
 
   return(as.data.frame(shapefile)[which(sapply(sf::st_intersects(shapefile,dat), function(z) if (length(z)==0) NA_integer_ else z[1]) == 1), ])
 }
+azblue =  az_color("azblue")
+azred  =   az_color("azred")
+oasis  =  az_color("oasis")
+
+ld = ld %>%
+  mutate(
+    averageGeneral = rowMeans(across(c(general2020, general2016), as.numeric), na.rm = TRUE) %>% round(),
+    averageMidterm = rowMeans(across(c(general2022, general2018), as.numeric), na.rm = TRUE) %>% round(),
+    averagePrimary = rowMeans(across(c(primary2022, primary2020, primary2018, primary2016), as.numeric), na.rm = TRUE) %>% round()
+  )
+
 
 ggtheme <- theme(
   plot.title = element_text(hjust = 0, vjust = 0, colour = azblue, size = 13),
@@ -60,8 +50,6 @@ ggtheme <- theme(
   legend.text = element_text(size = 13),
   legend.title = element_text(size = 13)
 )
-
-
 # Construct vote data from shape properties
 shape_properties_extracted <- ld$shape_properties
 parsed_data <- list()
@@ -86,7 +74,7 @@ server <- function(input, output) {
 
     min <- min(ld[[selected_var]], na.rm = TRUE)
     max <- max(ld[[selected_var]], na.rm = TRUE)
-    pal <- colorNumeric("YlOrRd", domain = c(0, 1))
+    pal <- colorNumeric(palette = brewer.pal(7, "YlGnBu"), domain = c(0, 1))
     ques = (ld[[selected_var]] - min) / (max - min)
 
     leaflet(ld) %>%
@@ -99,9 +87,12 @@ server <- function(input, output) {
           paste0(
             "<b>Legislative District:</b> ", ld$LD[i], # Add the LD label here
             "<br>",
-            "<b>Vote Score:</b> ", round(ld[[selected_var]][i], 2),
+            "<b>Participation Score:</b> ", format(round(ld[[selected_var]][i], 2), big.mark = ","),
             "<br>") %>%
             htmltools::HTML()
+
+
+
         }),
         labelOptions = labelOptions(
           style = list(
@@ -220,7 +211,8 @@ server <- function(input, output) {
 
 
  output$pie <- renderPlotly({
-   cd %>%
+   ld %>%
+     filter(LD == intersecting_geom_reactive()) %>%
      subset(select = c(republican_registration, democratic_registration, independent_registration)) %>%
      rename(Republican = republican_registration,
             Democrat = democratic_registration,
@@ -251,8 +243,10 @@ server <- function(input, output) {
  filtered_data <- ld %>% select(input$variable)
 print(dim(filtered_data))
 
-       ggplot(filtered_data, aes(x = .data[[input$variable]])) +
-         geom_histogram(fill = oasis, color = "white", binwidth = 0.02) +
+filtered_data %>%
+       ggplot( aes(x = .data[[input$variable]])) +
+         geom_histogram(fill = oasis, color = "white"
+                        ) +
 
          # Add a vertical line at the mean with a label
          geom_vline(aes(xintercept = mean), color = "darkgrey", linetype = "dashed", size = 1) +
@@ -275,14 +269,99 @@ print(dim(filtered_data))
 
  })
 
- output$race <- renderUI({
-  geom_data <- ld %>% filter(LD == intersecting_geom_reactive())
+
+ output$voteChar = renderUI({
+
+   geom_data = ld %>% as.data.frame()  %>%
+     filter(LD == intersecting_geom_reactive()) %>%
+     as.data.frame()  %>%
+     reframe(ld = LD,
+               general = averageGeneral,
+               primary = averagePrimary,
+               midterm = averageMidterm,
+               avProb  = voterPrediction,
+               avLG   = generalVoterScore,
+               avPrim = primaryVoterScore,
+               republican = republican,
+               independent = independent,
+               democrat = democrat
+     ) %>%
+     mutate(
+       general = formatC(general, format = "f", big.mark = ",", digits = 0),
+       primary = formatC(primary, format = "f", big.mark = ",", digits = 0),
+       midterm = formatC(midterm, format = "f", big.mark = ",", digits = 0),
+       avProb = round(avProb, 2),
+       avLG = round(avLG, 2),
+       avPrim = round(avPrim, 2),
+       total_voters =format(democrat + republican + independent,  big.mark = ","),
+       republican =  format(republican, big.mark = ","),
+       independent =format(independent,big.mark = ","),
+       democrat =format(democrat, big.mark = ",") ,
+
+     )
+
+   ### Make a card.
+
+     # Extract and format the desired columns with row markers
+     formatted_text <- paste(
+       "<h3>Political Participation </h3>",
+       "<div style='display: flex; justify-content: space-between;'>",
+       "<div>",
+       #  "<b style='font-size: 1.2em; padding-bottom: 10px;'>Legislative District:</b><br>", # Increase font size and add bottom padding
+       "<b>Legislative District:</b><br>",
+       "<b>General Election Count:</b><br>",
+       "<b>Primary Election Count:</b><br>",
+       "<b>Midterm Election Count:</b><br>",
+       "<b>Average Voter Probability:</b><br>",
+       "<b>Latent General Election  Participation:</b><br>",
+       "<b>Latent Primary Election Participation:</b><br>","<br>",
+       #  "<b style='font-size: 1.2em; padding-bottom: 10px;'>Legislative District:</b><br>", # Increase font size and add bottom padding
+       "<b>Republican Registration:</b><br>",
+       "<b>Independent:</b><br>",
+       "<b>Democratic Registration:</b><br>",
+       "<b>Total Registered Voters:</b><br>",
+       "</div>",
+       "<div style='text-align: right;'>",
+       #          geom_data$LD, "<br>",
+       geom_data$ld, "<br>",
+       geom_data$general, "<br>",
+       geom_data$primary, "<br>",
+       geom_data$midterm, "<br>",
+       geom_data$avProb, "<br>",
+       geom_data$avLG, "<br>",
+       geom_data$avPrim, "<br><br>",
+       geom_data$republican, "<br>",
+       geom_data$independent, "<br>",
+       geom_data$democrat, "<br>",
+       geom_data$total_voters, "<br>", "<br>",
+
+       "</div>",
+       "</div>"
+     )
+     if (!is.null(geom_data)) {
+     # Wrap the formatted text in a div with card-like styling and 3D effect
+     div(class = "card", style = "padding: 20px; margin-top: 10px;
+                                box-shadow: 5px 5px 10px rgba(0, 0, 0, 0.2);",
+         HTML(formatted_text)
+     )
+
+   } else {
+     div(class = "card", style = "padding: 20px; margin-top: 10px;
+                                box-shadow: 5px 5px 10px rgba(0, 0, 0, 0.2);",
+         p("No geometry selected yet.")
+     )
+ }
+ })
+
+
+ output$demographics <- renderUI({
+  geom_data <- ld %>%  filter(LD == intersecting_geom_reactive())
 
   if (!is.null(geom_data)) {
 
     # Extract and format the desired columns with row markers
     formatted_text <- paste(
-      "<h3>Race/Ethnicity </h3>",
+      "<h3>Demographics </h3>",
       "<div style='display: flex; justify-content: space-between;'>",
         "<div>",
     #  "<b style='font-size: 1.2em; padding-bottom: 10px;'>Legislative District:</b><br>", # Increase font size and add bottom padding
@@ -293,7 +372,12 @@ print(dim(filtered_data))
           "<b>Asian:</b><br>",
           "<b>Other Race:</b><br>",
           "<b>Two or More Races:</b><br>",
-          "<b>Latino:</b>",
+          "<b>Latino:</b><br>",
+          #make a space
+          "<br>",
+          "<b>Poverty Rate:</b><br>",
+          "<b>Median Household Income:</b><br>",
+           "<b>Median Age:</b><br>",
         "</div>",
         "<div style='text-align: right;'>",
 #          geom_data$LD, "<br>",
@@ -304,7 +388,11 @@ print(dim(filtered_data))
           round(geom_data$asian_proportion * 100, 2), "%<br>",
           round(geom_data$other_race_proportion * 100, 2), "%<br>",
           round(geom_data$two_or_more_race * 100, 2), "%<br>",
-          round(geom_data$latino * 100, 2), "%",
+          round(geom_data$latino * 100, 2), "%<br>", "<br>",
+round(geom_data$poverty_rate * 100, 2), "%<br>",
+"$",format(geom_data$median_household_income, big.mark = ","), "<br>",
+round(geom_data$median_age, 2), "years<br>",
+
         "</div>",
       "</div>"
     )
@@ -418,16 +506,26 @@ print(dim(filtered_data))
 
   output$map_title <- renderUI({
     if(input$variable == "voterPrediction") {
-      h2("Predicted Voting in 2024 Election")
+      h3("Predicted Voting in 2024 Election")
     } else if(input$variable == "generalVoterScore") {
-      h2("General Voting Score")
+      h3("General Voting Score")
     } else if(input$variable == "primaryVoterScore") {
-      h2("Primary Voting Score")
+      h3("Primary Voting Score")
     }
+    else if(input$variable == "averageGeneral") {
+      h3("Average Participation in General Elections")
+    }
+    else if(input$variable == "averageMidterm") {
+      h3("Average Participation in Midterm Elections")
+    }
+    else if(input$variable == "averagePrimary") {
+      h3("Average Participation in Primary Elections")
+    }
+
   })
 
   output$ld <- renderUI({
-      h3("Displayed: Legislative District", intersecting_geom_reactive())
+      h3(paste("Legislative District", intersecting_geom_reactive()))
   })
 
 }

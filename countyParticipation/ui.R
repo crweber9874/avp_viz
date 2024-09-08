@@ -3,6 +3,7 @@ library(leaflet)
 library(shinydashboard)
 library(DT)
 library(plotly)
+library(stringr)
 
 source('functions.R')
 
@@ -11,7 +12,7 @@ ui <- fluidPage(
   titlePanel(
     div(
       style = "text-align: center;",
-      titlePanel("Voting Rates in Arizona's Legislative Districts")
+      titlePanel("Voting Rates in Arizona's Counties")
     )),
   fluidRow( # Row for selectInput and race table
     column(width = 4, offset = 1,
@@ -32,7 +33,7 @@ ui <- fluidPage(
            uiOutput(outputId = "map_title")
     ),
     column(width = 5,
-           uiOutput(outputId = "ld")
+           uiOutput(outputId = "county")
     )
   ),
   #         uiOutput(outputId = "map_title")),
@@ -49,7 +50,7 @@ fluidRow(
   column(width = 5, offset = 1,
          height = 6,
          uiOutput(outputId = "demographics")),
-  column(width = 5,
+  column(width = 6,
          height = 4,
          uiOutput(outputId = "voteChar")
   )),

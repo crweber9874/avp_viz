@@ -11,7 +11,7 @@ ui <- fluidPage(
   titlePanel(
     div(
       style = "text-align: center;",
-      titlePanel("Voting Rates in Arizona's Legislative Districts")
+      titlePanel("Voting Rates in Arizona's Congressional Districts")
     )),
   fluidRow( # Row for selectInput and race table
     column(width = 4, offset = 1,
@@ -32,7 +32,7 @@ ui <- fluidPage(
            uiOutput(outputId = "map_title")
     ),
     column(width = 5,
-           uiOutput(outputId = "ld")
+           uiOutput(outputId = "county")
     )
   ),
   #         uiOutput(outputId = "map_title")),
@@ -61,7 +61,7 @@ fluidRow(
               The user may select a variable to visualize on both a map and a histogram of voting in the state.
               The map can be colored with 1 of 6 scores: (1) Expected number of presidential election voters;
               (2) Expected number of primary election voters; (3) Expected number of midterm election voters;
-              (4) Average Predicted Vote in 2024: The voter averaged by district scores for predicted vote in the 2024 election.
+              (4) Average Predicted Vote in 2024: The voter averaged by county scores for predicted vote in the 2024 election.
               (5) General Voting Score: The district averaged score based on general election voting in the 2016, 2018, 2020, and 2022 elections.
               (6) Primary Voting Score: The district averaged score based on general election voting in the 2016, 2018, 2020, and 2022 elections.",
                style = "font-size: 14px; color: gray; margin-top: 10px;")

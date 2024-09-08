@@ -1,0 +1,12 @@
+name: countyParticipation
+title: countyParticipation
+username: azvoterproject
+account: azvoterproject
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 12641896
+bundleId: 9076619
+url: https://azvoterproject.shinyapps.io/countyParticipation/
+version: 1
+asMultiple: FALSE
+asStatic: FALSE

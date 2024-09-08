@@ -1,12 +1,12 @@
-name: simpleMap
-title: simpleMap
+name: ldParticipation
+title: ldParticipation
 username: azvoterproject
 account: azvoterproject
 server: shinyapps.io
 hostUrl: https://api.shinyapps.io/v1
-appId: 12585487
-bundleId: 9062545
-url: https://azvoterproject.shinyapps.io/simpleMap/
+appId: 12641491
+bundleId: 9076457
+url: https://azvoterproject.shinyapps.io/ldParticipation/
 version: 1
 asMultiple: FALSE
 asStatic: FALSE

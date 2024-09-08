@@ -60,6 +60,37 @@ shape_data = function(data = ld, level = c("ld", "county", "cd", "tract")){
   shape_properties_extracted <- ld$shape_properties
   parsed_data <- list()
 
+
+
+
+  cd <- read.csv("~/Dropbox/github_repos/avp-map/avp_map_viz/data/voter_cd_public.csv") %>%
+    shape_data(level = "cd") %>%
+    st_as_sf(wkt = "shape_geom") %>%
+    st_simplify(dTolerance = 0.02)
+
+
+  save(cd, file = "~/Dropbox/github_repos/avp-map/avp_map_viz/cdParticipation/cd_public.rda")
+
+  county <- read.csv("~/Dropbox/github_repos/avp-map/avp_map_viz/data/voter_county_public.csv") %>%
+    shape_data(level = "county") %>%
+    st_as_sf(wkt = "shape_geom") %>%
+    st_simplify(dTolerance = 0.02)
+
+
+  save(county, file = "~/Dropbox/github_repos/avp-map/avp_map_viz/countyParticipation/county_public.rda")
+
+####tracts
+
+
+  shape_properties_extracted <- cd$shape_properties
+  parsed_data <- list()
+
+
+
+
+
+
+
   # Loop through each shape property
   for (shape_property in shape_properties_extracted) {
     parsed_list <- fromJSON(shape_property)
@@ -79,6 +110,9 @@ shape_data = function(data = ld, level = c("ld", "county", "cd", "tract")){
     shape_data(level = "cd") %>%
     st_as_sf(wkt = "shape_geom") %>%
     st_simplify(dTolerance = 0.02)
+
+
+
 
 
 

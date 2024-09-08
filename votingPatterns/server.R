@@ -24,6 +24,7 @@ azgrey  =  az_color("azgrey")
 
 
 # The working data
+
 dat = voting %>%
   mutate(
     votePresD_2016 = as.numeric(Pres2016_D),
@@ -47,8 +48,6 @@ dat = voting %>%
 
 ###
 
-# This should be created in necessary long fofrmat requests
-
 vote_data = dat %>%subset(select = c(CD, votePresD_2016,
                   votePresD_2020,
                   votePresR_2016,
@@ -61,10 +60,8 @@ pivot_longer(cols = c(votePresD_2016,
   mutate(Democrat = ifelse(grepl("D", label), "Democrat", "Republican")) %>%
   mutate(year = as.numeric(gsub("\\D", "", label)))
 
-### Democratic Line Plot ###
 
-### Republican line plot
-
+# Issue error of drag ou
 state_boundary <- function(shapefile, markers) {
   removeNotification(id = "region_error", session = getDefaultReactiveDomain())
 

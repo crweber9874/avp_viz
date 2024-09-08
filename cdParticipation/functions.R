@@ -7,7 +7,7 @@ pie_chart <- function(data) {
                   textinfo = 'label+percent',
                   insidetextfont = list(color = '#F4F4F4'),
                   hoverinfo = 'text',
-                  text = ~paste0(round(values*100, 2) , '% of voters'),
+                  text = ~paste0(round(values, 2)*100, '% of voters'),
                   marker = list(
                     colors = c("#AB0520", "#0C234B", "#378DBD"),
                     line = list(color = '#FFFFFF', width = 1)
@@ -46,7 +46,3 @@ az_color <- function(color = c("azblue", "azred", "oasis", "grey", "warmgrey", "
   if(color == "azwhite") {return("#FFFFFF")}
 
 }
-
-
-
-
