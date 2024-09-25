@@ -11,10 +11,9 @@ ui <- fluidPage(
   titlePanel(
     div(
       style = "text-align: center;",
-      titlePanel("Voting Rates in Arizona's Congressional Districts")
     )),
   fluidRow( # Row for selectInput and race table
-    column(width = 4, offset = 1,
+    column(width = 4,
            selectInput("variable", "   Color the map below by:",
                        choices = c("Average General Participation" = "averageGeneral",
                                    "Average Primary Participation" = "averagePrimary",
@@ -28,16 +27,16 @@ ui <- fluidPage(
   ),
 
   fluidRow(
-    column(width = 5, offset = 1,
+    column(width = 5,
            uiOutput(outputId = "map_title")
     ),
     column(width = 5,
-           uiOutput(outputId = "county")
+           uiOutput(outputId = "cd")
     )
   ),
   #         uiOutput(outputId = "map_title")),
   fluidRow(
-    column(width = 5, offset = 1,
+    column(width = 5,
            height = 4,
            leafletOutput(outputId = "map", height = "400px")
     ),
@@ -46,7 +45,7 @@ ui <- fluidPage(
            plotOutput(outputId = "hist"))
 ),
 fluidRow(
-  column(width = 5, offset = 1,
+  column(width = 5,
          height = 6,
          uiOutput(outputId = "demographics")),
   column(width = 5,
@@ -55,7 +54,7 @@ fluidRow(
   )),
 # add a space
 fluidRow(
-  column(width = 10, offset = 1,
+  column(width = 10,
          height = 3,
          tags$p("Note: This tool explores voting rates in Arizona.
               The user may select a variable to visualize on both a map and a histogram of voting in the state.

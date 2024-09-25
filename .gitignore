@@ -3,3 +3,9 @@
 .RData
 .Ruserdata
 data
+.csv
+stuff.R
+packrat
+rsconnect
+www
+*.dcf
