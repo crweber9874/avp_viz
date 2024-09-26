@@ -9,3 +9,7 @@ packrat
 rsconnect
 www
 *.dcf
+tract_cd_public.rda
+tract_ld_public.rda
+tract_county_public.rda
+
