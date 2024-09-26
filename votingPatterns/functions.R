@@ -34,9 +34,7 @@ pie_chart <- function(data) {
 
 az_color <- function(color = c("azblue", "azred", "oasis", "grey", "warmgrey", "midnight", "azurite", "chili", "white")) {
   if(color == "azblue") {return("#0C234B")}
-
   if(color == "azred")  {return("#AB0520")}
-
   if(color == "oasis")  {return("#378DBD")}
   if(color == "azgrey")   {return("#E2E9EB")}
   if(color == "warmgrey") {return("#F4EDE5")}
@@ -48,5 +46,46 @@ az_color <- function(color = c("azblue", "azred", "oasis", "grey", "warmgrey", "
 }
 
 
+az_color_list = list(
+  az_template = c(az_color("azblue"), az_color("azred"), az_color("oasis"),
+                  az_color("azgrey"), az_color("warmgrey"), az_color("midnight"),
+                  az_color("azurite"), az_color("chili"), az_color("white")),
+  fav_colors = c(az_color("azgrey"), az_color("azred"), az_color("oasis"))
+)
+
+
+### Leaflet map
+create_leaflet_map <- function(cdDat, pal, ques, title, district) {
+  leaflet(cdDat) %>%
+    clearShapes()%>%
+    fitBounds(lng1 = -114.818269, lat1 = 31.332177, lng2 = -109.045223, lat2 = 37.00426) %>%
+    setView(lng = -111.9309, lat = 34.1682, zoom = 6.2) %>%
+    addProviderTiles(providers$OpenStreetMap, group = "Street Map") %>%
+    addProviderTiles(providers$Stadia.StamenToner, group = "Light") %>%
+    addProviderTiles(providers$Stadia.AlidadeSmoothDark, group = "Dark") %>%
+    # Add layer control
+    addLayersControl(
+      baseGroups = c("Street Map", "Light", "Dark"),
+      options = layersControlOptions(collapsed = TRUE)
+    ) %>%
+    addPolygons(
+      data  = cdDat,
+      color = "black",
+      fillColor = ~pal(ques),
+      weight = 1,
+      layerId = ~CD,
+      fillOpacity = 0.7)%>%
+    leaflet.extras::addSearchOSM(options = searchOptions(collapsed = TRUE)) %>%
+    addLegend(
+      pal = pal,
+      values = ~ques,
+      opacity = 0.5,
+      title = title,
+      position = "bottomleft" # Move the legend to the bottom right
+    )
+}
+
+
+custom_palette <- colorRampPalette(az_color_list$fav_colors)
 
 

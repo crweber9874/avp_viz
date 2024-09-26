@@ -12,18 +12,14 @@ library(GGally)
 includeCSS("www/style.css")
 
 load("cd_public.rda")
-## Color Palette
 
 source("functions.R")
-
 
 azblue =  az_color("azblue")
 azred  =   az_color("azred")
 oasis  =  az_color("oasis")
 azgrey  =  az_color("azgrey")
 
-
-# The working data
 
 dat = voting %>%
   mutate(
@@ -42,7 +38,7 @@ dat = voting %>%
     pollingVoter  = polling_voters/general2022,
     provisionalVoters = provisional_voters/general2022) %>%
     # Order partisan_balance and create a variable that shows the rank ordering of each row
-  select(c(CD, votePresD_2020, votePresD_2016, votePresR_2020, votePresR_2016, partisan_tilt, partisan_balance, percentRepublican,
+  dplyr::select(c(CD, votePresD_2020, votePresD_2016, votePresR_2020, votePresR_2016, partisan_tilt, partisan_balance, percentRepublican,
            percentDemocrat, percentIndependent, totalVoters,
            earlyVoter, pollingVoter, provisionalVoters, shape_geom))
 
@@ -93,7 +89,6 @@ ggtheme <- theme(
 
 
 
-# Construct vote data from shape properties
 shape_properties_extracted <- dat$shape_properties
 parsed_data <- list()
 
@@ -102,9 +97,6 @@ for (shape_property in shape_properties_extracted) {
   parsed_list <- fromJSON(shape_property)
   parsed_data <- append(parsed_data, list(parsed_list))
 }
-
-# Combine the parsed data into a data frame
-# vote_data <- bind_rows(parsed_data)
 
 server <- function(input, output) {
  # Set UA lat lon
@@ -217,14 +209,11 @@ print(display_name)
       current_markers$lat <- input$map_marker_dragend$lat
       current_markers$lon <- input$map_marker_dragend$lng
 
-      # Find the intersecting geometry
       intersecting_geom <- dat[st_intersects(dat, st_sfc(st_point(c(input$map_marker_dragend$lng, input$map_marker_dragend$lat)), crs = st_crs(dat))) %>% lengths > 0, ]
 
       if (nrow(intersecting_geom) > 0) {
-        # Print the geometry type (assuming 'shape_geom' contains geometry type information)
         cat("Marker is within LD type:", intersecting_geom$CD, "\n")
 
-        # Update filtered_data with intersecting geometries
         filtered_data(intersecting_geom)
         intersecting_geom_reactive(intersecting_geom$CD)
 
@@ -233,7 +222,6 @@ print(display_name)
       }
     }
 
-# Make a dragaable marker that is observed at drag end
     leafletProxy(mapId = "map") %>%
       clearMarkers() %>%
       addMarkers(data = data.frame(lat = current_markers$lat,
@@ -241,7 +229,6 @@ print(display_name)
                  options = markerOptions(draggable = TRUE))
   })
 
-  # Set observers for the map click event
   observeEvent(input$map_shape_click, {
     leafletProxy(mapId = "map") %>%
       clearMarkers() %>%
@@ -257,11 +244,9 @@ print(display_name)
     intersecting_geom <- dat[which(st_intersects(dat, st_sfc(st_point(c(input$map_shape_click$lng, input$map_shape_click$lat)), crs = st_crs(dat))) %>% lengths > 0), ]
 
     if (nrow(intersecting_geom) > 0) {
-      # Print the geometry type (assuming 'shape_geom' contains geometry type information)
       cat("Marker is within geometry type:", intersecting_geom$CD, "\n")
       intersecting_geom_reactive(intersecting_geom$CD)
 
-      # Update filtered_data with intersecting geometries
       filtered_data(intersecting_geom)
 
     } else {
@@ -350,7 +335,7 @@ print(display_name)
 
    dat <- vote_data %>% as.data.frame() %>%
      filter(Democrat == "Republican") %>%
-     mutate(value = as.numeric(value)) %>%  # Ensure value is numeric
+     mutate(value = as.numeric(value)) %>%  #
      mutate(plotval = ifelse(year == 2016, value, -2)) %>%
      group_by(CD)
 
@@ -384,14 +369,14 @@ print(display_name)
          title = "Percent",
          range = c(20, 90)
        ),
-       showlegend = FALSE , # Remove the legend
+       showlegend = FALSE ,
 
        hoverlabel = list(
-         bgcolor = "white",  # Background color
-         bordercolor = "black",  # Border color
+         bgcolor = "white",
+         bordercolor = "black",
          font = list(
-           size = 12,  # Font size
-           color = "black"  # Font color
+           size = 12,
+           color = "black"
          )
        )
      )
@@ -414,14 +399,12 @@ print(display_name)
   if (!is.null(geom_data)) {
 
 
-    # Extract and format the desired columns with row markers
     formatted_text <- paste0(
       paste0("<b> Congressional District </b>", "<b>", geom_data$CD, "</b>"),
       "<hr style='border: none; border-top: 1px solid #000; width: 100px; margin: 10px 0;'>",  # Small vertical line
 
       "<div style='display: flex; justify-content: space-between;'>",
         "<div>",
-    #  "<b style='font-size: 1.2em; padding-bottom: 10px;'>Legislative District:</b><br>", # Increase font size and add bottom padding
           "<b>Partisan Tilt</b><br>",
           "<b>Partisan Balance (Vote Dem - Vote Rep):</b><br>",
           "<b>Registered Independent</b><br>",
@@ -432,7 +415,6 @@ print(display_name)
           "<b>Total Voters:</b><br>",
         "</div>",
         "<div style='text-align: right;'>",
-#          geom_data$LD, "<br>",
           geom_data$partisan_tilt, "<br>",
           geom_data$partisan_balance, "<br>",
           round(geom_data$percentIndependent, 2), "%<br>",
@@ -445,7 +427,6 @@ print(display_name)
       "</div>"
     )
 
-    # Wrap the formatted text in a div with card-like styling and 3D effect
     div(class = "card", style = "padding: 20px; margin-top: 10px;
                                 box-shadow: 5px 5px 10px rgba(0, 0, 0, 0.2);",
         HTML(formatted_text)
@@ -469,19 +450,16 @@ print(display_name)
 
    if (!is.null(geom_data)) {
 
-     # Extract and format the desired columns with row markers
      formatted_text <- paste(
        "<h3>Party Registration </h3>",
        "<div style='display: flex; justify-content: space-between;'>",
        "<div>",
-       #  "<b style='font-size: 1.2em; padding-bottom: 10px;'>Legislative District:</b><br>", # Increase font size and add bottom padding
        "<b>Republican Registration:</b><br>",
        "<b>Independent:</b><br>",
        "<b>Democratic Registration:</b><br>",
        "<b>Total Registered Voters:</b><br>",
        "</div>",
        "<div style='text-align: right;'>",
-       #          geom_data$LD, "<br>",
        format(geom_data$republican, big.mark = ","), "<br>",
        format(geom_data$independent,big.mark = ","), " <br>",
        format(geom_data$democrat, big.mark = ",") ,"<br>",
@@ -491,7 +469,6 @@ print(display_name)
        "</div>"
      )
 
-     # Wrap the formatted text in a div with card-like styling and 3D effect
      div(class = "card", style = "padding: 20px; margin-top: 10px;
                                 box-shadow: 5px 5px 10px rgba(0, 0, 0, 0.2);",
          HTML(formatted_text)
@@ -510,7 +487,6 @@ print(display_name)
 
 
 
-  # Add an observer to handle the zoom control
   observeEvent(input$zoomControl, {
     leafletProxy("map") %>%
       setView(zoom = input$zoomControl)

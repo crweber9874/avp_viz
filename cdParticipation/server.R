@@ -50,25 +50,20 @@ ggtheme <- theme(
   legend.text = element_text(size = 13),
   legend.title = element_text(size = 13)
 )
-# Construct vote data from shape properties
 shape_properties_extracted <- cd$shape_properties
 parsed_data <- list()
 
-# Loop through each shape property
 for (shape_property in shape_properties_extracted) {
   parsed_list <- fromJSON(shape_property)
   parsed_data <- append(parsed_data, list(parsed_list))
 }
 
-# Combine the parsed data into a data frame
 vote_data <- bind_rows(parsed_data)
 
 server <- function(input, output) {
-  # Set UA lat lon
   LAT =  32.228779
   LON = - 110.976743
   variable_name = reactiveVal("Predicted Vote in 2024")
-  # Load the data
   output$map <- renderLeaflet({
     selected_var <- input$variable
 
@@ -132,13 +127,10 @@ server <- function(input, output) {
   current_markers <- reactiveValues(
     lat = LAT, lon = LON)
 
-  # Reactive value to store the filtered data based on marker interaction
   filtered_data <- reactiveVal(NULL)
 
-  # This pulls the User's cd
   intersecting_geom_reactive <- reactiveVal(5)
 
-  # Set the variable name
   output$variable <- renderText({
     input$variable
   })
@@ -155,14 +147,11 @@ server <- function(input, output) {
       current_markers$lat <- input$map_marker_dragend$lat
       current_markers$lon <- input$map_marker_dragend$lng
 
-      # Find the intersecting geometry
       intersecting_geom <- cd[st_intersects(cd, st_sfc(st_point(c(input$map_marker_dragend$lng, input$map_marker_dragend$lat)), crs = st_crs(cd))) %>% lengths > 0, ]
 
       if (nrow(intersecting_geom) > 0) {
-        # Print the geometry type (assuming 'shape_geom' contains geometry type information)
         cat("Marker is within cd type:", intersecting_geom$CD, "\n")
 
-        # Update filtered_data with intersecting geometries
         filtered_data(intersecting_geom)
         intersecting_geom_reactive(intersecting_geom$CD)
 
@@ -171,7 +160,6 @@ server <- function(input, output) {
       }
     }
 
-    # Make a dragaable marker that is observed at drag end
     leafletProxy(mapId = "map") %>%
       clearMarkers() %>%
       addMarkers(data = data.frame(lat = current_markers$lat,
@@ -179,7 +167,6 @@ server <- function(input, output) {
                  options = markerOptions(draggable = TRUE))
   })
 
-  # Set observers for the map click event
   observeEvent(input$map_shape_click, {
     leafletProxy(mapId = "map") %>%
       clearMarkers() %>%
@@ -232,26 +219,22 @@ server <- function(input, output) {
 
   output$hist <- renderPlot({
 
-    # Calculate the mean for the selected cd and variable
     mean <- cd %>%
       filter(CD == intersecting_geom_reactive()) %>%
       pull(input$variable) %>% mean()
 
-    # Print the mean value (for debugging)
     print(mean)
 
-    filtered_data <- cd %>% select(input$variable)
+    filtered_data <- cd %>% dplyr::select(input$variable)
     print(dim(filtered_data))
 
     filtered_data %>%
       ggplot( aes(x = .data[[input$variable]])) +
-      geom_histogram(fill = oasis, color = "white", bins = 5,
+      geom_histogram(fill = oasis, color = "white", bins = 10,
       ) +
 
-      # Add a vertical line at the mean with a label
       geom_vline(aes(xintercept = mean), color = "darkgrey", linetype = "dashed", size = 1) +
 
-      # Add distribution median
       geom_vline(aes(xintercept = median(.data[[input$variable]])), color = "black", linetype = "solid", size = 1) +
 
       annotate("text", x = mean, y = Inf, label = paste0( "CD:", intersecting_geom_reactive(), " \nScore (Dashed)"),
@@ -307,7 +290,6 @@ server <- function(input, output) {
       "<h3>Political Participation </h3>",
       "<div style='display: flex; justify-content: space-between;'>",
       "<div>",
-      #  "<b style='font-size: 1.2em; padding-bottom: 10px;'>Legislative District:</b><br>", # Increase font size and add bottom padding
       "<b>Congressional District:</b><br>",
       "<b>General Election Count:</b><br>",
       "<b>Primary Election Count:</b><br>",
@@ -315,14 +297,12 @@ server <- function(input, output) {
       "<b>Average Voter Probability:</b><br>",
       "<b>Latent General Election  Participation:</b><br>",
       "<b>Latent Primary Election Participation:</b><br>","<br>",
-      #  "<b style='font-size: 1.2em; padding-bottom: 10px;'>Legislative District:</b><br>", # Increase font size and add bottom padding
       "<b>Republican Registration:</b><br>",
       "<b>Independent:</b><br>",
       "<b>Democratic Registration:</b><br>",
       "<b>Total Registered Voters:</b><br>",
       "</div>",
       "<div style='text-align: right;'>",
-      #          geom_data$cd, "<br>",
       geom_data$cd, "<br>",
       geom_data$general, "<br>",
       geom_data$primary, "<br>",
@@ -339,7 +319,6 @@ server <- function(input, output) {
       "</div>"
     )
     if (!is.null(geom_data)) {
-      # Wrap the formatted text in a div with card-like styling and 3D effect
       div(class = "card", style = "padding: 20px; margin-top: 10px;
                                 box-shadow: 5px 5px 10px rgba(0, 0, 0, 0.2);",
           HTML(formatted_text)
@@ -365,7 +344,6 @@ server <- function(input, output) {
         "<div style='display: flex; justify-content: space-between;'>",
         "<div>",
         #  "<b style='font-size: 1.2em; padding-bottom: 10px;'>Legislative District:</b><br>", # Increase font size and add bottom padding
-        "<b>Total Population:</b><br>",
         "<b>White:</b><br>",
         "<b>Black:</b><br>",
         "<b>American Indian:</b><br>",
@@ -380,8 +358,6 @@ server <- function(input, output) {
         "<b>Median Age:</b><br>",
         "</div>",
         "<div style='text-align: right;'>",
-        #          geom_data$cd, "<br>",
-        format(geom_data$total_population, big.mark = ","), "<br>",
         round(geom_data$white_proportion * 100, 2), "%<br>",
         round(geom_data$black_proportion * 100, 2), "%<br>",
         round(geom_data$native_proportion * 100, 2), "%<br>",
@@ -419,19 +395,16 @@ server <- function(input, output) {
 
     if (!is.null(geom_data)) {
 
-      # Extract and format the desired columns with row markers
       formatted_text <- paste(
         "<h3>Party Registration </h3>",
         "<div style='display: flex; justify-content: space-between;'>",
         "<div>",
-        #  "<b style='font-size: 1.2em; padding-bottom: 10px;'>Legislative District:</b><br>", # Increase font size and add bottom padding
         "<b>Republican Registration:</b><br>",
         "<b>Independent:</b><br>",
         "<b>Democratic Registration:</b><br>",
         "<b>Total Registered Voters:</b><br>",
         "</div>",
         "<div style='text-align: right;'>",
-        #          geom_data$cd, "<br>",
         format(geom_data$republican, big.mark = ","), "<br>",
         format(geom_data$independent,big.mark = ","), " <br>",
         format(geom_data$democrat, big.mark = ",") ,"<br>",
@@ -441,7 +414,6 @@ server <- function(input, output) {
         "</div>"
       )
 
-      # Wrap the formatted text in a div with card-like styling and 3D effect
       div(class = "card", style = "padding: 20px; margin-top: 10px;
                                 box-shadow: 5px 5px 10px rgba(0, 0, 0, 0.2);",
           HTML(formatted_text)
@@ -462,12 +434,10 @@ server <- function(input, output) {
 
     if (!is.null(geom_data)) {
 
-      # Extract and format the desired columns with row markers
       formatted_text <- paste(
         "<h3>Demographics</h3>",
         "<div style='display: flex; justify-content: space-between;'>",
         "<div>",
-        #  "<b style='font-size: 1.2em; padding-bottom: 10px;'>Legislative District:</b><br>", # Increase font size and add bottom padding
         "<b>Poverty Rate:</b><br>",
         "<b>Median Househocd Income:</b><br>",
         "<b>Median Age:</b><br>",
@@ -481,7 +451,6 @@ server <- function(input, output) {
         "</div>"
       )
 
-      # Wrap the formatted text in a div with card-like styling and 3D effect
       div(class = "card", style = "padding: 20px; margin-top: 10px;
                                 box-shadow: 5px 5px 10px rgba(0, 0, 0, 0.2);",
           HTML(formatted_text)
@@ -498,7 +467,6 @@ server <- function(input, output) {
 
 
 
-  # Add an observer to handle the zoom control
   observeEvent(input$zoomControl, {
     leafletProxy("map") %>%
       setView(zoom = input$zoomControl)
